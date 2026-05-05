@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: pocket-protector-backend
+    runtime: python
+    plan: starter
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: EMERGENT_LLM_KEY
+        sync: false
+      - key: MONGO_URL
+        value: mongodb://localhost:27017
+      - key: DB_NAME
+        value: pocket_protector
