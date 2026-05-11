@@ -301,7 +301,7 @@ async def analyze_content(request: AnalyzeRequest):
 
     try:
         if is_image:
-        messages = [
+            messages = [
             {"role": "system", "content": system_msg},
             {
                 "role": "user",
@@ -320,7 +320,7 @@ async def analyze_content(request: AnalyzeRequest):
             }
         ]
         else:
-        messages = [
+             messages = [
             {"role": "system", "content": system_msg},
             {
                 "role": "user",
