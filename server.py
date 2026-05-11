@@ -30,7 +30,8 @@ except Exception as _e:
     client = None
     db = None
 
-EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -298,25 +299,47 @@ async def analyze_content(request: AnalyzeRequest):
     is_image = bool(request.image_base64)
     system_msg = IMAGE_SYSTEM_MESSAGE if is_image else SYSTEM_MESSAGE
 
-    chat = LlmChat(
-        api_key=EMERGENT_LLM_KEY,
-        session_id=str(uuid.uuid4()),
-        system_message=system_msg
-    ).with_model("openai", "gpt-4.1")
-
     try:
-        if is_image:
-            image_content = ImageContent(image_base64=request.image_base64)
-            user_msg = UserMessage(
-                text="Analyze this image. Assess behavioral reliability (text content patterns) and representation reliability (visual quality) separately. Return text_suspicion_score for text signals only, and image_authenticity for visual signals only.",
-                file_contents=[image_content]
-            )
-        else:
-            user_msg = UserMessage(
-                text=f"Analyze this content for deception patterns:\n\n{request.text}"
-            )
+    if is_image:
+        messages = [
+            {"role": "system", "content": system_msg},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Analyze this image. Assess behavioral reliability and representation reliability."
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{request.image_base64}"
+                        }
+                    }
+                ]
+            }
+        ]
+    else:
+        messages = [
+            {"role": "system", "content": system_msg},
+            {
+                "role": "user",
+                "content": f"Analyze this content for deception patterns:\n\n{request.text}"
+            }
+        ]
 
-        response_text = await chat.send_message(user_msg)
+    response = await openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages,
+        temperature=0.2,
+    )
+
+    response_text = response.choices[0].message.content or ""
+    parsed = parse_llm_response(response_text)
+
+except Exception as e:
+    logger.error(f"LLM analysis error: {e}")
+    parsed = None
         parsed = parse_llm_response(response_text)
 
     except Exception as e:
