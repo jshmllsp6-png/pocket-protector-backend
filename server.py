@@ -300,7 +300,7 @@ async def analyze_content(request: AnalyzeRequest):
     system_msg = IMAGE_SYSTEM_MESSAGE if is_image else SYSTEM_MESSAGE
 
     try:
-    if is_image:
+        if is_image:
         messages = [
             {"role": "system", "content": system_msg},
             {
@@ -319,7 +319,7 @@ async def analyze_content(request: AnalyzeRequest):
                 ]
             }
         ]
-    else:
+        else:
         messages = [
             {"role": "system", "content": system_msg},
             {
@@ -328,23 +328,20 @@ async def analyze_content(request: AnalyzeRequest):
             }
         ]
 
-    response = await openai_client.chat.completions.create(
+        response = await openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
         temperature=0.2,
     )
 
-    response_text = response.choices[0].message.content or ""
-    parsed = parse_llm_response(response_text)
-
-except Exception as e:
-    logger.error(f"LLM analysis error: {e}")
-    parsed = None
+        response_text = response.choices[0].message.content or ""
         parsed = parse_llm_response(response_text)
 
     except Exception as e:
-        logger.error(f"LLM analysis error: {e}")
-        parsed = None
+    logger.error(f"LLM analysis error: {e}")
+    parsed = None
+        
+
 
     if not parsed or ('suspicion_score' not in parsed and 'text_suspicion_score' not in parsed):
         parsed = {
