@@ -338,8 +338,8 @@ async def analyze_content(request: AnalyzeRequest):
         parsed = parse_llm_response(response_text)
 
     except Exception as e:
-    logger.error(f"LLM analysis error: {e}")
-    parsed = None
+        logger.error(f"LLM analysis error: {e}")
+        parsed = None
         
 
 
